@@ -1,207 +1,107 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_database/ui/firebase_animated_list.dart';
-import 'dart:async';
 
-final FirebaseAuth _auth = FirebaseAuth.instance;
-final GoogleSignIn _googleSignIn = new GoogleSignIn();
-final analytics = new FirebaseAnalytics();
-final reference = FirebaseDatabase.instance.reference().child('ideas');
+void main() => runApp(new MyApp());
 
-final ThemeData kIOSTheme = new ThemeData(
-  primarySwatch: Colors.orange,
-  primaryColor: Colors.grey[100],
-  primaryColorBrightness: Brightness.light,
-);
-
-final ThemeData kDefaultTheme = new ThemeData(
-  primarySwatch: Colors.purple,
-  accentColor: Colors.orangeAccent[400],
-);
-
-void main() {
-  runApp(new FriendlyChatApp());
-}
-
-class FriendlyChatApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: "Friendlychat",
-      theme: defaultTargetPlatform == TargetPlatform.iOS
-          ? kIOSTheme
-          : kDefaultTheme,
-      home: new ChatScreen(),
+      title: 'Project Ideas',
+      home: new ProjectIdeas(),
     );
   }
 }
 
-@override
-class ChatMessage extends StatelessWidget {
-  ChatMessage({this.snapshot, this.animation});
-  final DataSnapshot snapshot; // modified
-  final Animation animation; // modified
-
-  Widget build(BuildContext context) {
-    return new SizeTransition(
-      sizeFactor: new CurvedAnimation(parent: animation, curve: Curves.easeOut),
-      axisAlignment: 0.0,
-      child: new Container(
-        margin: const EdgeInsets.symmetric(vertical: 10.0),
-        child: new Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            new Container(
-              margin: const EdgeInsets.only(right: 16.0),
-              child: new CircleAvatar(
-                  backgroundImage: // modified
-                      new NetworkImage(snapshot.value['senderPhotoUrl'])),
-            ),
-            new Expanded(
-              child: new Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  new Text(snapshot.value['senderName'], //modified
-                      style: Theme.of(context).textTheme.subhead),
-                  new Container(
-                    margin: const EdgeInsets.only(top: 5.0),
-                    child: new Text(snapshot.value['text']),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ChatScreen extends StatefulWidget {
+class ProjectIdeas extends StatefulWidget {
   @override
-  State createState() => new ChatScreenState();
+  createState() => new ProjectIdeasState();
 }
 
-class ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _textController = new TextEditingController();
-  bool _isComposing = false;
+class ProjectIdeasState extends State<ProjectIdeas> {
+  final _ideas = <String>['idea1', 'idea2', 'idea3', 'idea4'];
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: new AppBar(
-          title: new Text("Friendlychat"),
-          elevation:
-              Theme.of(context).platform == TargetPlatform.iOS ? 0.0 : 4.0,
-        ),
-        body: new Column(children: <Widget>[
-          new Flexible(
-            child: new FirebaseAnimatedList(
-              query: reference,
-              sort: (a, b) => b.key.compareTo(a.key),
-              padding: new EdgeInsets.all(8.0),
-              reverse: true,
-              itemBuilder: (_, DataSnapshot snapshot,
-                  Animation<double> animation, int n) {
-                return new ChatMessage(
-                    snapshot: snapshot, animation: animation);
-              },
-            ),
-          ),
-          new Divider(height: 1.0),
-          new Container(
-            decoration: new BoxDecoration(color: Theme.of(context).cardColor),
-            child: _buildTextComposer(),
-          ),
-        ]));
-  }
-
-  Widget _buildTextComposer() {
-    return new IconTheme(
-      data: new IconThemeData(color: Theme.of(context).accentColor),
-      child: new Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: new Row(children: <Widget>[
-            new Flexible(
-              child: new TextField(
-                controller: _textController,
-                onChanged: (String text) {
-                  setState(() {
-                    _isComposing = text.length > 0;
-                  });
-                },
-                onSubmitted: _handleSubmitted,
-                decoration:
-                    new InputDecoration.collapsed(hintText: "Send a message"),
-              ),
-            ),
-            new Container(
-                margin: new EdgeInsets.symmetric(horizontal: 4.0),
-                child: Theme.of(context).platform == TargetPlatform.iOS
-                    ? new CupertinoButton(
-                        child: new Text("Send"),
-                        onPressed: _isComposing
-                            ? () => _handleSubmitted(_textController.text)
-                            : null,
-                      )
-                    : new IconButton(
-                        icon: new Icon(Icons.send),
-                        onPressed: _isComposing
-                            ? () => _handleSubmitted(_textController.text)
-                            : null,
-                      )),
-          ]),
-          decoration: Theme.of(context).platform == TargetPlatform.iOS
-              ? new BoxDecoration(
-                  border:
-                      new Border(top: new BorderSide(color: Colors.grey[200])))
-              : null),
+      appBar: new AppBar(
+        title: new Text('Project Ideas'),
+      ),
+      body: _projectsList(),
+      floatingActionButton: new FloatingActionButton(
+          onPressed: _newIdea, child: new Icon(Icons.add)),
     );
   }
 
-  Future<Null> _handleSubmitted(String text) async {
-    //modified
-    _textController.clear();
-    setState(() {
-      _isComposing = false;
-    });
-
-    _handleSignIn()
-        .then((_) => _sendMessage(text: text))
-        .catchError((e) => print(e));
+  Widget _projectsList() {
+    return new ListView.builder(
+      itemBuilder: (context, i) {
+        if (i.isOdd) return new Divider();
+        final index = i ~/ 2;
+        return new ProjectIdeaRow(text: _ideas[index]);
+      },
+      itemCount: _ideas.length * 2,
+    );
   }
 
-  void _sendMessage({String text}) {
-    reference.push().set({
-      //new
-      'text': text, //new
-      'senderName': _googleSignIn.currentUser.displayName, //new
-      'senderPhotoUrl': _googleSignIn.currentUser.photoUrl, //new
-    });
-    analytics.logEvent(name: 'send_message');
+  void _newIdea() {
+    Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
+      return new EditIdea();
+    }));
+  }
+}
+
+class ProjectIdeaRow extends StatelessWidget {
+  ProjectIdeaRow({this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return new ListTile(title: new Text(text));
+  }
+}
+
+class EditIdea extends StatefulWidget {
+  @override
+  createState() => new EditIdeaState();
+}
+
+class EditIdeaState extends State<EditIdea> {
+  final formKey = new GlobalKey<FormState>();
+  String _username;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      appBar: new AppBar(
+        title: new Text('Project Ideas'),
+      ),
+      body: buildForm(),
+      floatingActionButton: new FloatingActionButton(
+          onPressed: _saveIdea, child: new Icon(Icons.save)),
+    );
   }
 
-  Future<Null> _handleSignIn() async {
-    GoogleSignInAccount googleUser = _googleSignIn.currentUser;
-    if (googleUser == null) googleUser = await _googleSignIn.signInSilently();
-    if (googleUser == null) {
-      await _googleSignIn.signIn();
-      analytics.logLogin();
+  Form buildForm() {
+    return new Form(
+      key: formKey,
+      child: new Column(
+        children: <Widget>[
+          new TextFormField(
+            decoration: new InputDecoration(labelText: 'Idea Name'),
+            validator: (val) => val.isEmpty ? 'Name can\'t be empty.' : null,
+            onSaved: (val) => _username = val,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _saveIdea() {
+    final form = formKey.currentState;
+    if (form.validate()) {
+      form.save();
+
+      // TODO(eddie): Save to database.
     }
-    if (await _auth.currentUser() == null) {
-      //new
-      GoogleSignInAuthentication credentials = //new
-          await _googleSignIn.currentUser.authentication; //new
-      await _auth.signInWithGoogle(
-        //new
-        idToken: credentials.idToken, //new
-        accessToken: credentials.accessToken, //new
-      ); //new
-    } //ne
   }
 }
