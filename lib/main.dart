@@ -42,15 +42,32 @@ class ProjectIdeasState extends State<ProjectIdeas> {
           (_, DataSnapshot snapshot, Animation<double> animation, int n) {
         return _buildRow(snapshot);
       },
+      sort: (a, b) => (calculateScore(b) - calculateScore(a)).round(),
     );
   }
 
   Widget _buildRow(DataSnapshot snapshot) {
     return new ListTile(
-        title: new Text(snapshot.value['name']),
-        onTap: () {
-          _viewIdea(snapshot);
-        });
+      title: new Text(snapshot.value['name']),
+      onTap: () {
+        _viewIdea(snapshot);
+      },
+      trailing: new Text(calculateScore(snapshot).toStringAsFixed(2)),
+    );
+  }
+  
+  double calculateScore(DataSnapshot snapshot) {
+    final difficultyMult = 1;
+    final interestMult = 1;
+    final costMult = 1;
+    final timeMult = 1;
+
+    final difficulty = (snapshot.value['difficulty'] * -1 + 6) * difficultyMult;
+    final interest = (snapshot.value['interest']) * interestMult;
+    final cost = (snapshot.value['cost'] * -1 + 6) * costMult;
+    final time = (snapshot.value['time'] * -1 + 6) * timeMult;
+
+    return (difficulty + interest + cost + time) / 4;
   }
 
   void _newIdea() {
@@ -82,15 +99,8 @@ class EditIdeaState extends State<EditIdea> {
   String _description = '';
   int _difficulty = 3;
   int _interest = 3;
-  int _cost = 3;
   int _time = 3;
-
-  final numbers = [1, 2, 3, 4, 5]
-      .map((item) => new DropdownMenuItem(
-            child: new Text(item.toString()),
-            value: item,
-          ))
-      .toList();
+  int _cost = 3;
 
   @override
   Widget build(BuildContext context) {
@@ -99,8 +109,8 @@ class EditIdeaState extends State<EditIdea> {
       _description = snapshot.value['description'];
       _difficulty = snapshot.value['difficulty'];
       _interest = snapshot.value['interest'];
-      _cost = snapshot.value['cost'];
       _time = snapshot.value['time'];
+      _cost = snapshot.value['cost'];
     }
 
     return new Scaffold(
@@ -174,7 +184,12 @@ class EditIdeaState extends State<EditIdea> {
       child: new ListTile(
         title: new Text(title),
         subtitle: new DropdownButton(
-          items: numbers,
+          items: [1, 2, 3, 4, 5]
+              .map((item) => new DropdownMenuItem(
+                    child: new Text(item.toString()),
+                    value: item,
+                  ))
+              .toList(),
           onChanged: onChanged,
           value: value,
         ),
@@ -199,8 +214,8 @@ class EditIdeaState extends State<EditIdea> {
         'description': _description,
         'difficulty': _difficulty,
         'interest': _interest,
-        'cost': _cost,
         'time': _time,
+        'cost': _cost,
       });
 
       newIdea.once().then((snapshot) {
@@ -244,10 +259,40 @@ class ViewIdea extends StatelessWidget {
     return new Column(
       children: <Widget>[
         new ListTile(
-          title: new Text(snapshot.value['name']),
+          title: new Text('Name'),
+          subtitle: new Text(snapshot.value['name']),
         ),
         new ListTile(
-          title: new Text(snapshot.value['description']),
+          title: new Text('Description'),
+          subtitle: new Text(snapshot.value['description']),
+        ),
+        new Row(
+          children: <Widget>[
+            new Flexible(
+              child: new ListTile(
+                title: new Text('Difficulty'),
+                subtitle: new Text(snapshot.value['difficulty'].toString()),
+              ),
+            ),
+            new Flexible(
+              child: new ListTile(
+                title: new Text('Interest'),
+                subtitle: new Text(snapshot.value['interest'].toString()),
+              ),
+            ),
+            new Flexible(
+              child: new ListTile(
+                title: new Text('Time'),
+                subtitle: new Text(snapshot.value['time'].toString()),
+              ),
+            ),
+            new Flexible(
+              child: new ListTile(
+                title: new Text('Cost'),
+                subtitle: new Text(snapshot.value['cost'].toString()),
+              ),
+            ),
+          ],
         ),
       ],
     );
