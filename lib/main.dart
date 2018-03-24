@@ -80,6 +80,13 @@ class EditIdeaState extends State<EditIdea> {
   DataSnapshot snapshot;
   String _name = '';
   String _description = '';
+  double _difficulty = 3.0;
+
+  final numbers =
+      [1, 2, 3, 4, 5].map((item) => new DropdownMenuItem(
+            child: new Text(item.toString()),
+            value: item,
+          )).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +123,11 @@ class EditIdeaState extends State<EditIdea> {
                 val.isEmpty ? 'Description can\'t be empty.' : null,
             onSaved: (val) => _description = val,
           ),
+          new DropdownButton(
+            items: numbers,
+            onChanged: (val) => _difficulty = val,
+            value: _difficulty,
+          ),
         ],
       ),
     );
@@ -127,7 +139,7 @@ class EditIdeaState extends State<EditIdea> {
       form.save();
 
       DatabaseReference newIdea;
-      if(snapshot == null) {
+      if (snapshot == null) {
         newIdea = reference.push();
       } else {
         newIdea = reference.child(snapshot.key);
@@ -158,6 +170,13 @@ class ViewIdea extends StatelessWidget {
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Project Ideas'),
+        actions: <Widget>[
+          new IconButton(
+              icon: new Icon(Icons.delete),
+              onPressed: () {
+                _deleteIdea(context);
+              })
+        ],
       ),
       body: _buildView(),
       floatingActionButton: new FloatingActionButton(
@@ -174,13 +193,24 @@ class ViewIdea extends StatelessWidget {
         new ListTile(
           title: new Text(snapshot.value['name']),
         ),
+        new ListTile(
+          title: new Text(snapshot.value['description']),
+        ),
       ],
     );
   }
 
   void _editIdea(BuildContext context) {
-    Navigator.of(context).pushReplacement(new MaterialPageRoute(builder: (context) {
+    Navigator
+        .of(context)
+        .pushReplacement(new MaterialPageRoute(builder: (context) {
       return new EditIdea(snapshot: snapshot);
     }));
+  }
+
+  void _deleteIdea(BuildContext context) {
+    DatabaseReference idea = reference.child(snapshot.key);
+    idea.remove();
+    Navigator.of(context).pop();
   }
 }
