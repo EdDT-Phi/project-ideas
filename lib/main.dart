@@ -80,19 +80,27 @@ class EditIdeaState extends State<EditIdea> {
   DataSnapshot snapshot;
   String _name = '';
   String _description = '';
-  double _difficulty = 3.0;
+  int _difficulty = 3;
+  int _interest = 3;
+  int _cost = 3;
+  int _time = 3;
 
-  final numbers =
-      [1, 2, 3, 4, 5].map((item) => new DropdownMenuItem(
+  final numbers = [1, 2, 3, 4, 5]
+      .map((item) => new DropdownMenuItem(
             child: new Text(item.toString()),
             value: item,
-          )).toList();
+          ))
+      .toList();
 
   @override
   Widget build(BuildContext context) {
     if (snapshot != null) {
       _name = snapshot.value['name'];
       _description = snapshot.value['description'];
+      _difficulty = snapshot.value['difficulty'];
+      _interest = snapshot.value['interest'];
+      _cost = snapshot.value['cost'];
+      _time = snapshot.value['time'];
     }
 
     return new Scaffold(
@@ -123,12 +131,53 @@ class EditIdeaState extends State<EditIdea> {
                 val.isEmpty ? 'Description can\'t be empty.' : null,
             onSaved: (val) => _description = val,
           ),
-          new DropdownButton(
-            items: numbers,
-            onChanged: (val) => _difficulty = val,
-            value: _difficulty,
+          new Row(
+            children: <Widget>[
+              buildDropdownButton(_difficulty, 'Difficulty', (val) {
+                if (snapshot != null) {
+                  snapshot.value['difficulty'] = val;
+                } else {
+                  _difficulty = val;
+                }
+              }),
+              buildDropdownButton(_interest, 'Interest', (val) {
+                if (snapshot != null) {
+                  snapshot.value['interest'] = val;
+                } else {
+                  _interest = val;
+                }
+              }),
+              buildDropdownButton(_time, 'Time', (val) {
+                if (snapshot != null) {
+                  snapshot.value['time'] = val;
+                } else {
+                  _time = val;
+                }
+              }),
+              buildDropdownButton(_cost, 'Cost', (val) {
+                if (snapshot != null) {
+                  snapshot.value['cost'] = val;
+                } else {
+                  _cost = val;
+                }
+              }),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildDropdownButton(
+      int value, String title, ValueChanged<int> onChanged) {
+    return new Flexible(
+      child: new ListTile(
+        title: new Text(title),
+        subtitle: new DropdownButton(
+          items: numbers,
+          onChanged: onChanged,
+          value: value,
+        ),
       ),
     );
   }
@@ -148,6 +197,10 @@ class EditIdeaState extends State<EditIdea> {
       newIdea.set({
         'name': _name,
         'description': _description,
+        'difficulty': _difficulty,
+        'interest': _interest,
+        'cost': _cost,
+        'time': _time,
       });
 
       newIdea.once().then((snapshot) {
