@@ -49,23 +49,24 @@ class ProjectIdeasState extends State<ProjectIdeas> {
   Widget _buildRow(DataSnapshot snapshot) {
     return new ListTile(
       title: new Text(snapshot.value['name']),
+      subtitle: new Text(snapshot.value['description'], overflow: TextOverflow.ellipsis,),
       onTap: () {
         _viewIdea(snapshot);
       },
       trailing: new Text(calculateScore(snapshot).toStringAsFixed(2)),
     );
   }
-  
+
   double calculateScore(DataSnapshot snapshot) {
     final difficultyMult = 1;
-    final interestMult = 1;
-    final costMult = 1;
+    final interestMult = 1.2;
     final timeMult = 1;
+    final costMult = 0.8;
 
     final difficulty = (snapshot.value['difficulty'] * -1 + 6) * difficultyMult;
     final interest = (snapshot.value['interest']) * interestMult;
-    final cost = (snapshot.value['cost'] * -1 + 6) * costMult;
     final time = (snapshot.value['time'] * -1 + 6) * timeMult;
+    final cost = (snapshot.value['cost'] * -1 + 6) * costMult;
 
     return (difficulty + interest + cost + time) / 4;
   }
@@ -140,6 +141,7 @@ class EditIdeaState extends State<EditIdea> {
             validator: (val) =>
                 val.isEmpty ? 'Description can\'t be empty.' : null,
             onSaved: (val) => _description = val,
+            maxLines: 5,
           ),
           new Row(
             children: <Widget>[
